@@ -1,0 +1,117 @@
+int trig = 9;
+int echo = 10;
+
+int buzzer = 8;
+
+int green = 5;
+int blue = 4;
+int red = 3;
+
+long duration;
+int distance;
+
+// Variables for millis()
+unsigned long previousTime = 0;
+bool buzzerState = false;
+
+void setup() {
+  pinMode(trig, OUTPUT);
+  pinMode(echo, INPUT);
+
+  pinMode(buzzer, OUTPUT);
+
+  pinMode(green, OUTPUT);
+  pinMode(blue, OUTPUT);
+  pinMode(red, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  // ---------- Measure Distance ----------
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(trig, LOW);
+
+  duration = pulseIn(echo, HIGH, 30000);
+
+  if (duration == 0) {
+    Serial.println("Out of Range");
+
+    noTone(buzzer);
+
+    digitalWrite(green, LOW);
+    digitalWrite(blue, LOW);
+    digitalWrite(red, LOW);
+
+    return;
+  }
+
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // ---------- LEDs ----------
+  if (distance > 30) {
+    digitalWrite(green, HIGH);
+    digitalWrite(blue, LOW);
+    digitalWrite(red, LOW);
+  }
+
+  else if (distance > 10) {
+    digitalWrite(green, LOW);
+    digitalWrite(blue, HIGH);
+    digitalWrite(red, LOW);
+  }
+
+  else {
+    digitalWrite(green, LOW);
+    digitalWrite(blue, LOW);
+    digitalWrite(red, HIGH);
+  }
+
+  // ---------- Buzzer ----------
+  if (distance > 30) {
+    noTone(buzzer);
+    buzzerState = false;
+  }
+
+  else if (distance <= 5) {
+    tone(buzzer, 1200);
+  }
+
+  else {
+
+    int interval;
+
+    if (distance <= 10)
+      interval = 100;
+
+    else if (distance <= 20)
+      interval = 200;
+
+    else
+      interval = 400;
+
+    unsigned long currentTime = millis();
+
+    if (currentTime - previousTime >= interval) {
+
+      previousTime = currentTime;
+
+      buzzerState = !buzzerState;
+
+      if (buzzerState)
+        tone(buzzer, 1200);
+      else
+        noTone(buzzer);
+    }
+  }
+}
